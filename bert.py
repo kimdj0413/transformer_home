@@ -11,18 +11,17 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import load_model
-# import matplotlib.pyplot as plt
+
 import pickle
-tf.keras.backend.clear_session()
-"""
+
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
 data.drop_duplicates(subset=['title'], inplace=True)
 data.drop_duplicates(subset=['main'], inplace=True)
 data.dropna(inplace=True)
-data = data.sample(frac=1).reset_index(drop=True)
-data = data.iloc[:200000]
+# data = data.sample(frac=1).reset_index(drop=True)
+data = data.iloc[:20000]
 
 ##  등락 추가하기
 def datePlus(date):
@@ -57,30 +56,16 @@ for date in data['date']:
     except KeyError:
       date = datePlus(date)  
 data['result'] = raiseList
-# filteredData = data[data['date'] == '2024.06.21']
-# print(filteredData[['date', 'result']])
 
 ##  중복 처리
-# 제목 중복 : 19027 -> 13990
-# 본문 중복 : 19027 -> 14196
-# 총합 중복 : 19027 -> 13386
 data['titleDup'] = data.duplicated(subset=['title'], keep=False).astype(int)
 data['mainDup'] = data.duplicated(subset=['main'], keep=False).astype(int)
 data['duplicated'] = ((data['titleDup'] == 1) | (data['mainDup'] == 1)).astype(int)
-# print(data[['title', 'duplicated']][50:60])
-# print(len(data))
 data.drop_duplicates(subset=['title'], inplace=True)
 data.drop_duplicates(subset=['main'], inplace=True)
-# print(len(data))
-# total_duplicates = data['duplicated'].sum()
-# print(f"총 중복된 갯수: {total_duplicates}")
 
 ##  null 값 처리
-# print(data.isnull().sum(),"\n")
-# print(data.isnull().values.any(),"\n")
 data.dropna(inplace=True)
-# print(data.isnull().sum(),"\n")
-# print(data.isnull().values.any(),"\n")
 
 ##  요일을 숫자에서 글자로
 def numToDay(num):
@@ -110,12 +95,8 @@ def regulationText(text):
 data['preprocessedMain'] = data['main'].apply(regulationText)
 
 ##  제목, 본문, 요일 합치기
-data['combined_column'] = data['title'].astype(str) + ' ' + ' ' + data['dayWord'].astype(str) #+ ' ' + data['duplicated'].astype(str)+ data['preprocessedMain'].astype(str) 
-# randomNum = random.sample(range(19028), 3)
-# for i in randomNum:
-#   print("- "+data['combined_column'][i]+"\n")
+data['combined_column'] = data['title'].astype(str) + ' ' + data['preprocessedMain'].astype(str) +' '+ data['dayWord'].astype(str) #+ ' ' + data['duplicated'].astype(str)
 data.reset_index(drop=True, inplace=True)
-# print(data['combined_column'][3])
 
 ##  result의 0과 1 비율 맞추기
 countDown = data[data['result'] == 0].shape[0]
@@ -128,40 +109,19 @@ balancedData = pd.concat([dataDown, dataUp])
 ##  전처리 완료된 csv 새로 저장 후 불러오기
 selectedData = balancedData[['combined_column', 'result']]
 selectedData.to_csv('preprocessedCsv.csv', index=False)
-"""
+
 data = pd.read_csv('preprocessedCsv.csv')
 data.columns = ['combined_column', 'result']
 print(len(data))
 
 ##    트레인, 테스트 셋 나누기
 train_data, test_data = train_test_split(data[['combined_column', 'result']], test_size=0.2, random_state=42)
-# print(len(train_data))
-# print(train_data[:2])
-# train_data['result'].value_counts().plot(kind = 'bar')
 
 ##  토큰화
-# tokenizer = BertTokenizer.from_pretrained("klue/bert-base")   #bert-base-multilingual-cased
-# tokenizer.save_pretrained("tokenizer")
+tokenizer = BertTokenizer.from_pretrained("klue/bert-base")   #bert-base-multilingual-cased
+tokenizer.save_pretrained("tokenizer")
 tokenizer = BertTokenizer.from_pretrained("tokenizer")
-# print('평균길이 : ',sum(map(len, train_data['combined_column']))/ len(train_data))
-# print('최대길이 : ',max(len(script) for script in train_data['combined_column']))
-# train_data['combined_column']의 길이 계산
-# lengths = [len(script) for script in train_data['combined_column']]
-# length_counts = pd.Series(lengths).value_counts().sort_index()
-
-# plt.figure(figsize=(10, 6))
-# plt.bar(length_counts.index, length_counts.values, color='skyblue')
-# plt.xlabel('legth')
-# plt.ylabel('data')
-# plt.title('length per data')
-# plt.show()
-# print(tokenizer.encode("내 말 찰떡같이 알아듣는 AI 비서 꼼꼼한 대화분석으로 만든다 한국어 학습 위한 챗봇 구축에 기여 연구팀은 현재까지 200여 명이 참여한 WoZ 실험을 통해 총 2만 5천 건의 말차례가 담긴 데이터를 수집했고 삼성전자 빅스비와 사람의 대화에서 7천여 건의 말차례를 수집했다 이를 토대로 총 45개의 행위와 52개의 개체명을 추출 데이터를 태깅했다 이 태깅 화"))
-# print(tokenizer.tokenize("내 말 찰떡같이 알아듣는 AI 비서 꼼꼼한 대화분석으로 만든다 한국어 학습 위한 챗봇 구축에 기여 연구팀은 현재까지 200여 명이 참여한 WoZ 실험을 통해 총 2만 5천 건의 말차례가 담긴 데이터를 수집했고 삼성전자 빅스비와 사람의 대화에서 7천여 건의 말차례를 수집했다 이를 토대로 총 45개의 행위와 52개의 개체명을 추출 데이터를 태깅했다 이 태깅 화"))
-# print(tokenizer.encode("장중시황 코스피 외국인 순매도에 2660선 후퇴 삼성전자 SK하이닉스 LG에너지솔루션 현대차 삼성바이오로직스 삼성전자우 기아 셀트리온 KB금융 POSCO홀딩스 같은 시각 코스닥지수는 전일 대비 026 상승한 84059를 기록중이다 목"))
-# print(tokenizer.tokenize("장중시황 코스피 외국인 순매도에 2660선 후퇴 삼성전자 SK하이닉스 LG에너지솔루션 현대차 삼성바이오로직스 삼성전자우 기아 셀트리온 KB금융 POSCO홀딩스 같은 시각 코스닥지수는 전일 대비 026 상승한 84059를 기록중이다 목"))
-max_seq_len = 128
-# encoded_result = tokenizer.encode("장중시황 코스피 외국인 순매도에 2660선 후퇴 삼성전자 SK하이닉스 LG에너지솔루션 현대차 삼성바이오로직스 삼성전자우 기아 셀트리온 KB금융 POSCO홀딩스 같은 시각 코스닥지수는 전일 대비 026 상승한 84059를 기록중이다 목", truncation=True, max_length=max_seq_len, padding='max_length')
-# print(encoded_result)
+max_seq_len = 282
 
 def convert_examples_to_features(examples, labels, max_seq_len, tokenizer):
 
@@ -190,17 +150,17 @@ def convert_examples_to_features(examples, labels, max_seq_len, tokenizer):
 
     return (input_ids, attention_masks, token_type_ids), data_labels
 
-# train_X, train_y = convert_examples_to_features(train_data['combined_column'], train_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
-# test_X, test_y = convert_examples_to_features(test_data['combined_column'], test_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+train_X, train_y = convert_examples_to_features(train_data['combined_column'], train_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+test_X, test_y = convert_examples_to_features(test_data['combined_column'], test_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
 
-# directory = 'pickle'
-# if not os.path.exists(directory):
-#     os.makedirs(directory)
-# with open('pickle/train_data.pkl', 'wb') as f:
-#     pickle.dump((train_X, train_y), f)
+directory = 'pickle'
+if not os.path.exists(directory):
+    os.makedirs(directory)
+with open('pickle/train_data.pkl', 'wb') as f:
+    pickle.dump((train_X, train_y), f)
 
-# with open('pickle/test_data.pkl', 'wb') as f:
-#     pickle.dump((test_X, test_y), f)
+with open('pickle/test_data.pkl', 'wb') as f:
+    pickle.dump((test_X, test_y), f)
 
 with open('pickle/train_data.pkl', 'rb') as f:
     train_X, train_y = pickle.load(f)
@@ -214,13 +174,12 @@ token_type_id = train_X[2][0]
 label = train_y[0]
 
 model = TFBertModel.from_pretrained("klue/bert-base", from_pt=True)
-max_seq_len = 128
-tf.keras.mixed_precision.set_global_policy('mixed_float16')
+max_seq_len = 282
 class TFBertForSequenceClassification(tf.keras.Model):
     def __init__(self, model_name):
         super(TFBertForSequenceClassification, self).__init__()
         self.bert = TFBertModel.from_pretrained(model_name, from_pt=True)
-        self.dropout = tf.keras.layers.Dropout(0.5)
+        self.dropout = tf.keras.layers.Dropout(0.7)
         self.classifier = tf.keras.layers.Dense(1,
                                                 kernel_initializer=tf.keras.initializers.TruncatedNormal(0.02),
                                                 activation='sigmoid',
@@ -235,11 +194,6 @@ class TFBertForSequenceClassification(tf.keras.Model):
 
         return prediction
     
-    # def save_model(self, save_path):
-    #     self.save_weights(save_path)
-
-    # def load_model(self, load_path):
-    #     self.load_weights(load_path)
 checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath='model/model_checkpoint',
     save_weights_only=True,
@@ -250,25 +204,26 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
 )
 early_stopping_callback = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',
-    patience=4,
+    patience=5,
     mode='min',
     verbose=1
 )
-def scheduler(epoch, lr):
-    if epoch < 3:
-        return lr
-    else:
-        return lr * tf.math.exp(-0.1)
+# def scheduler(epoch, lr):
+#     if epoch < 3:
+#         return lr
+#     else:
+#         return lr * tf.math.exp(-0.1)
 
-lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+# lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
 model = TFBertForSequenceClassification("klue/bert-base")
 optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5)
 loss = tf.keras.losses.BinaryCrossentropy()
 model.compile(optimizer=optimizer, loss=loss, metrics = ['accuracy'])
-model.fit(train_X, train_y, epochs=20, batch_size=2, validation_split=0.2, verbose=1, callbacks=[checkpoint_callback, early_stopping_callback]) # ,callbacks=[early_stopping, checkpoint]
+model.fit(train_X, train_y, epochs=30, batch_size=16, validation_split=0.2, verbose=1, callbacks=[checkpoint_callback, early_stopping_callback]) # ,callbacks=[early_stopping, checkpoint]
 # model.save_model('model_weights')
 # model.load_model('model_weights')
 model.load_weights('model/model_checkpoint')
 results = model.evaluate(test_X, test_y, batch_size=2)
 print("test loss, test acc: ", results)
+##  전처리 셔플X, 10000개 - val_loss: 0.3143 - val_accuracy: 0.8633
