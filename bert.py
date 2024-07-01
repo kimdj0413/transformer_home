@@ -1,9 +1,9 @@
 import pandas as pd
 import re
-import random
+import os
 from sklearn.model_selection import train_test_split
 # import tensorflow_datasets as tfds
-from transformers import BertTokenizer, TFBertModel
+from transformers import BertTokenizer, TFBertModel, DistilBertModel
 import csv
 import datetime
 from tqdm import tqdm
@@ -12,12 +12,15 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import load_model
 # import matplotlib.pyplot as plt
-
+import pickle
+tf.keras.backend.clear_session()
+"""
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
 data.drop_duplicates(subset=['title'], inplace=True)
 data.drop_duplicates(subset=['main'], inplace=True)
+data.dropna(inplace=True)
 data = data.sample(frac=1).reset_index(drop=True)
 data = data.iloc[:200000]
 
@@ -53,15 +56,6 @@ for date in data['date']:
       break
     except KeyError:
       date = datePlus(date)  
-  # try:
-  #   resultBinary(date, dataDict, raiseList)
-  # except KeyError:
-  #   date = datePlus(date)
-  #   try:
-  #     resultBinary(date, dataDict, raiseList)
-  #   except KeyError:
-  #     date = datePlus(date)
-  #     resultBinary(date, dataDict, raiseList)
 data['result'] = raiseList
 # filteredData = data[data['date'] == '2024.06.21']
 # print(filteredData[['date', 'result']])
@@ -116,7 +110,7 @@ def regulationText(text):
 data['preprocessedMain'] = data['main'].apply(regulationText)
 
 ##  제목, 본문, 요일 합치기
-data['combined_column'] = data['title'].astype(str) + ' ' + data['preprocessedMain'].astype(str) + ' ' + data['dayWord'].astype(str) #+ ' ' + data['duplicated'].astype(str)
+data['combined_column'] = data['title'].astype(str) + ' ' + ' ' + data['dayWord'].astype(str) #+ ' ' + data['duplicated'].astype(str)+ data['preprocessedMain'].astype(str) 
 # randomNum = random.sample(range(19028), 3)
 # for i in randomNum:
 #   print("- "+data['combined_column'][i]+"\n")
@@ -134,8 +128,10 @@ balancedData = pd.concat([dataDown, dataUp])
 ##  전처리 완료된 csv 새로 저장 후 불러오기
 selectedData = balancedData[['combined_column', 'result']]
 selectedData.to_csv('preprocessedCsv.csv', index=False)
+"""
 data = pd.read_csv('preprocessedCsv.csv')
 data.columns = ['combined_column', 'result']
+print(len(data))
 
 ##    트레인, 테스트 셋 나누기
 train_data, test_data = train_test_split(data[['combined_column', 'result']], test_size=0.2, random_state=42)
@@ -163,7 +159,7 @@ tokenizer = BertTokenizer.from_pretrained("tokenizer")
 # print(tokenizer.tokenize("내 말 찰떡같이 알아듣는 AI 비서 꼼꼼한 대화분석으로 만든다 한국어 학습 위한 챗봇 구축에 기여 연구팀은 현재까지 200여 명이 참여한 WoZ 실험을 통해 총 2만 5천 건의 말차례가 담긴 데이터를 수집했고 삼성전자 빅스비와 사람의 대화에서 7천여 건의 말차례를 수집했다 이를 토대로 총 45개의 행위와 52개의 개체명을 추출 데이터를 태깅했다 이 태깅 화"))
 # print(tokenizer.encode("장중시황 코스피 외국인 순매도에 2660선 후퇴 삼성전자 SK하이닉스 LG에너지솔루션 현대차 삼성바이오로직스 삼성전자우 기아 셀트리온 KB금융 POSCO홀딩스 같은 시각 코스닥지수는 전일 대비 026 상승한 84059를 기록중이다 목"))
 # print(tokenizer.tokenize("장중시황 코스피 외국인 순매도에 2660선 후퇴 삼성전자 SK하이닉스 LG에너지솔루션 현대차 삼성바이오로직스 삼성전자우 기아 셀트리온 KB금융 POSCO홀딩스 같은 시각 코스닥지수는 전일 대비 026 상승한 84059를 기록중이다 목"))
-max_seq_len = 282
+max_seq_len = 128
 # encoded_result = tokenizer.encode("장중시황 코스피 외국인 순매도에 2660선 후퇴 삼성전자 SK하이닉스 LG에너지솔루션 현대차 삼성바이오로직스 삼성전자우 기아 셀트리온 KB금융 POSCO홀딩스 같은 시각 코스닥지수는 전일 대비 026 상승한 84059를 기록중이다 목", truncation=True, max_length=max_seq_len, padding='max_length')
 # print(encoded_result)
 
@@ -194,8 +190,23 @@ def convert_examples_to_features(examples, labels, max_seq_len, tokenizer):
 
     return (input_ids, attention_masks, token_type_ids), data_labels
 
-train_X, train_y = convert_examples_to_features(train_data['combined_column'], train_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
-test_X, test_y = convert_examples_to_features(test_data['combined_column'], test_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+# train_X, train_y = convert_examples_to_features(train_data['combined_column'], train_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+# test_X, test_y = convert_examples_to_features(test_data['combined_column'], test_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+
+# directory = 'pickle'
+# if not os.path.exists(directory):
+#     os.makedirs(directory)
+# with open('pickle/train_data.pkl', 'wb') as f:
+#     pickle.dump((train_X, train_y), f)
+
+# with open('pickle/test_data.pkl', 'wb') as f:
+#     pickle.dump((test_X, test_y), f)
+
+with open('pickle/train_data.pkl', 'rb') as f:
+    train_X, train_y = pickle.load(f)
+
+with open('pickle/test_data.pkl', 'rb') as f:
+    test_X, test_y = pickle.load(f)
 
 input_id = train_X[0][0]
 attention_mask = train_X[1][0]
@@ -203,11 +214,13 @@ token_type_id = train_X[2][0]
 label = train_y[0]
 
 model = TFBertModel.from_pretrained("klue/bert-base", from_pt=True)
-max_seq_len = 282
+max_seq_len = 128
+tf.keras.mixed_precision.set_global_policy('mixed_float16')
 class TFBertForSequenceClassification(tf.keras.Model):
     def __init__(self, model_name):
         super(TFBertForSequenceClassification, self).__init__()
         self.bert = TFBertModel.from_pretrained(model_name, from_pt=True)
+        self.dropout = tf.keras.layers.Dropout(0.5)
         self.classifier = tf.keras.layers.Dense(1,
                                                 kernel_initializer=tf.keras.initializers.TruncatedNormal(0.02),
                                                 activation='sigmoid',
@@ -217,7 +230,8 @@ class TFBertForSequenceClassification(tf.keras.Model):
         input_ids, attention_mask, token_type_ids = inputs
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         cls_token = outputs[1]
-        prediction = self.classifier(cls_token)
+        x = self.dropout(cls_token)
+        prediction = self.classifier(x)
 
         return prediction
     
@@ -236,17 +250,25 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
 )
 early_stopping_callback = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',
-    patience=3,
+    patience=4,
     mode='min',
     verbose=1
 )
+def scheduler(epoch, lr):
+    if epoch < 3:
+        return lr
+    else:
+        return lr * tf.math.exp(-0.1)
+
+lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
+
 model = TFBertForSequenceClassification("klue/bert-base")
 optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5)
 loss = tf.keras.losses.BinaryCrossentropy()
 model.compile(optimizer=optimizer, loss=loss, metrics = ['accuracy'])
-model.fit(train_X, train_y, epochs=20, batch_size=16, validation_split=0.2, verbose=1, callbacks=[checkpoint_callback, early_stopping_callback]) # ,callbacks=[early_stopping, checkpoint]
+model.fit(train_X, train_y, epochs=20, batch_size=2, validation_split=0.2, verbose=1, callbacks=[checkpoint_callback, early_stopping_callback]) # ,callbacks=[early_stopping, checkpoint]
 # model.save_model('model_weights')
 # model.load_model('model_weights')
 model.load_weights('model/model_checkpoint')
-results = model.evaluate(test_X, test_y, batch_size=16)
+results = model.evaluate(test_X, test_y, batch_size=2)
 print("test loss, test acc: ", results)
