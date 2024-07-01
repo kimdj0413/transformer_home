@@ -11,11 +11,15 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import load_model
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
+data.drop_duplicates(subset=['title'], inplace=True)
+data.drop_duplicates(subset=['main'], inplace=True)
+data = data.sample(frac=1).reset_index(drop=True)
+data = data.iloc[:200000]
 
 ##  등락 추가하기
 def datePlus(date):
