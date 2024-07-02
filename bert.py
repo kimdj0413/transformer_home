@@ -3,7 +3,7 @@ import re
 import os
 from sklearn.model_selection import train_test_split
 # import tensorflow_datasets as tfds
-from transformers import BertTokenizer, TFBertModel, DistilBertModel
+from transformers import BertTokenizer, TFBertModel, BertModel
 import csv
 import datetime
 from tqdm import tqdm
