@@ -118,7 +118,7 @@ print(len(data))
 train_data, test_data = train_test_split(data[['combined_column', 'result']], test_size=0.2, random_state=42)
 
 ##  토큰화
-tokenizer = BertTokenizer.from_pretrained("klue/bert-base")   #bert-base-multilingual-cased
+tokenizer = BertTokenizer.from_pretrained("klue/bert-base")
 tokenizer.save_pretrained("tokenizer")
 tokenizer = BertTokenizer.from_pretrained("tokenizer")
 max_seq_len = 282
