@@ -7,3 +7,4 @@ pickle/train_data.pkl
 tokenizer/special_tokens_map.json
 model/checkpoint
 model/model_checkpoint.index
+model/model_checkpoint.index
