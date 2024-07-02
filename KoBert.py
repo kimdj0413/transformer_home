@@ -13,7 +13,7 @@ from kobert_tokenizer import KoBERTTokenizer
 import csv
 import datetime
 import matplotlib.pyplot as plt
-"""
+
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
@@ -21,7 +21,7 @@ data.drop_duplicates(subset=['title'], inplace=True)
 data.drop_duplicates(subset=['main'], inplace=True)
 data.dropna(inplace=True)
 data = data.sample(frac=1).reset_index(drop=True)
-data = data.iloc[:10000]
+data = data.iloc[:150000]
 
 ##  등락 추가하기
 def datePlus(date):
@@ -247,3 +247,4 @@ print("test loss, test acc: ", results)
 # lr_scheduler_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
 ##  전처리 셔플X, 10000개 - val_loss: 0.2909 - val_accuracy: 0.8789
+"""
