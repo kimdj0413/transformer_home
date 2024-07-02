@@ -11,9 +11,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.models import load_model
-
 import pickle
-
+"""
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
@@ -21,7 +20,7 @@ data.drop_duplicates(subset=['title'], inplace=True)
 data.drop_duplicates(subset=['main'], inplace=True)
 data.dropna(inplace=True)
 # data = data.sample(frac=1).reset_index(drop=True)
-data = data.iloc[:20000]
+data = data.iloc[:10000]
 
 ##  등락 추가하기
 def datePlus(date):
@@ -109,7 +108,7 @@ balancedData = pd.concat([dataDown, dataUp])
 ##  전처리 완료된 csv 새로 저장 후 불러오기
 selectedData = balancedData[['combined_column', 'result']]
 selectedData.to_csv('preprocessedCsv.csv', index=False)
-
+"""
 data = pd.read_csv('preprocessedCsv.csv')
 data.columns = ['combined_column', 'result']
 print(len(data))
@@ -150,17 +149,17 @@ def convert_examples_to_features(examples, labels, max_seq_len, tokenizer):
 
     return (input_ids, attention_masks, token_type_ids), data_labels
 
-train_X, train_y = convert_examples_to_features(train_data['combined_column'], train_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
-test_X, test_y = convert_examples_to_features(test_data['combined_column'], test_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+# train_X, train_y = convert_examples_to_features(train_data['combined_column'], train_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
+# test_X, test_y = convert_examples_to_features(test_data['combined_column'], test_data['result'], max_seq_len=max_seq_len, tokenizer=tokenizer)
 
-directory = 'pickle'
-if not os.path.exists(directory):
-    os.makedirs(directory)
-with open('pickle/train_data.pkl', 'wb') as f:
-    pickle.dump((train_X, train_y), f)
+# directory = 'pickle'
+# if not os.path.exists(directory):
+#     os.makedirs(directory)
+# with open('pickle/train_data.pkl', 'wb') as f:
+#     pickle.dump((train_X, train_y), f)
 
-with open('pickle/test_data.pkl', 'wb') as f:
-    pickle.dump((test_X, test_y), f)
+# with open('pickle/test_data.pkl', 'wb') as f:
+#     pickle.dump((test_X, test_y), f)
 
 with open('pickle/train_data.pkl', 'rb') as f:
     train_X, train_y = pickle.load(f)
@@ -220,7 +219,7 @@ model = TFBertForSequenceClassification("klue/bert-base")
 optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5)
 loss = tf.keras.losses.BinaryCrossentropy()
 model.compile(optimizer=optimizer, loss=loss, metrics = ['accuracy'])
-model.fit(train_X, train_y, epochs=30, batch_size=16, validation_split=0.2, verbose=1, callbacks=[checkpoint_callback, early_stopping_callback]) # ,callbacks=[early_stopping, checkpoint]
+model.fit(train_X, train_y, epochs=30, batch_size=4, validation_split=0.2, verbose=1, callbacks=[checkpoint_callback, early_stopping_callback]) # ,callbacks=[early_stopping, checkpoint]
 # model.save_model('model_weights')
 # model.load_model('model_weights')
 model.load_weights('model/model_checkpoint')
