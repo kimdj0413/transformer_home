@@ -13,7 +13,7 @@ from kobert_tokenizer import KoBERTTokenizer
 import csv
 import datetime
 import matplotlib.pyplot as plt
-
+"""
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
@@ -177,7 +177,8 @@ with open('pickle/train_data.pkl', 'rb') as f:
 
 with open('pickle/test_data.pkl', 'rb') as f:
     test_X, test_y = pickle.load(f)
-
+print(train_X[:1])
+"""
 input_id = train_X[0][0]
 attention_mask = train_X[1][0]
 token_type_id = train_X[2][0]
