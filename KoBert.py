@@ -13,7 +13,8 @@ from kobert_tokenizer import KoBERTTokenizer
 import csv
 import datetime
 import matplotlib.pyplot as plt
-"""
+from konlpy.tag import Okt
+
 ##  csv 불러오기
 data = pd.read_csv('naverNews.csv')
 data.columns = ['date','day','media','title','main']
@@ -70,19 +71,19 @@ data.dropna(inplace=True)
 ##  요일을 숫자에서 글자로
 def numToDay(num):
   if num == 0:
-    return '월'
+    return '월요일'
   elif num == 1:
-    return '화'
+    return '화요일'
   elif num == 2:
-    return '수'
+    return '수요일'
   elif num == 3:
-    return '목'
+    return '목요일'
   elif num == 4:
-    return '금'
+    return '금요일'
   elif num == 5:
-    return '토'
+    return '토요일'
   elif num == 6:
-    return '일'
+    return '일요일'
 data['dayWord'] = data['day'].apply(numToDay)
 
 ##  본문 내용 정규표현식
@@ -178,7 +179,7 @@ with open('pickle/train_data.pkl', 'rb') as f:
 with open('pickle/test_data.pkl', 'rb') as f:
     test_X, test_y = pickle.load(f)
 print(train_X[:1])
-"""
+
 input_id = train_X[0][0]
 attention_mask = train_X[1][0]
 token_type_id = train_X[2][0]
